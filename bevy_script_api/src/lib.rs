@@ -5,6 +5,8 @@ pub mod error;
 pub mod lua;
 #[cfg(feature = "rhai")]
 pub mod rhai;
+#[cfg(feature = "rune")]
+pub mod rune;
 
 pub mod common;
 

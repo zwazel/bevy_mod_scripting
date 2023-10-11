@@ -7,7 +7,7 @@ license = "MIT"
 description = "Multi language scripting in Bevy"
 repository = "https://github.com/makspll/bevy_mod_scripting"
 homepage = "https://github.com/makspll/bevy_mod_scripting"
-keywords = ["bevy", "gamedev", "scripting", "lua"]
+keywords = ["bevy", "gamedev", "scripting", "lua", "rhai", "rune"]
 categories = ["game-development"]
 readme = "readme.md"
 include = ["readme.md", "/src", "/examples", "/assets", "LICENSE"]
@@ -21,7 +21,16 @@ name = "bevy_mod_scripting"
 path = "src/lib.rs"
 
 [package.metadata."docs.rs"]
-features = ["lua", "lua54", "rhai", "lua_script_api", "rhai_script_api", "teal"]
+features = [
+    "lua",
+    "lua54",
+    "rhai",
+    "lua_script_api",
+    "rhai_script_api",
+    "teal",
+    "rune",
+    "rune_script_api",
+]
 
 [package.metadata.release]
 pre-release-replacements = [
@@ -29,6 +38,7 @@ pre-release-replacements = [
     { file = "Cargo.toml", search = '^(?P<h>bevy_mod_scripting_core\s*=.*)version\s*=\s*".*"(?P<t>.*)$', replace = "${h}version = \"{{version}}\"${t}", exactly = 1 },
     { file = "Cargo.toml", search = '^(?P<h>bevy_mod_scripting_lua\s*=.*)version\s*=\s*".*"(?P<t>.*)$', replace = "${h}version = \"{{version}}\"${t}", exactly = 1 },
     { file = "Cargo.toml", search = '^(?P<h>bevy_mod_scripting_rhai\s*=.*)version\s*=\s*".*"(?P<t>.*)$', replace = "${h}version = \"{{version}}\"${t}", exactly = 1 },
+    { file = "Cargo.toml", search = '^(?P<h>bevy_mod_scripting_rune\s*=.*)version\s*=\s*".*"(?P<t>.*)$', replace = "${h}version = \"{{version}}\"${t}", exactly = 1 },
     { file = "Cargo.toml", search = '^(?P<h>bevy_script_api\s*=.*)version\s*=\s*".*"(?P<t>.*)$', replace = "${h}version = \"{{version}}\"${t}", exactly = 1 },
 ]
 
@@ -58,11 +68,16 @@ mlua_async = ["bevy_mod_scripting_lua/mlua_async"]
 rhai = ["bevy_mod_scripting_rhai"]
 rhai_script_api = ["bevy_script_api/rhai"]
 
+## rune
+rune = ["bevy_mod_scripting_rune"]
+rune_script_api = ["bevy_script_api/rune"]
+
 [dependencies]
 bevy = { version = "0.11", default-features = false }
 bevy_mod_scripting_core = { path = "bevy_mod_scripting_core", version = "0.3.0" }
 bevy_mod_scripting_lua = { path = "languages/bevy_mod_scripting_lua", version = "0.3.0", optional = true }
 bevy_mod_scripting_rhai = { path = "languages/bevy_mod_scripting_rhai", version = "0.3.0", optional = true }
+bevy_mod_scripting_rune = { path = "languages/bevy_mod_scripting_rune", version = "0.3.0", optional = true }
 bevy_script_api = { path = "bevy_script_api", version = "0.3.0", optional = true }
 
 [dev-dependencies]
@@ -84,6 +99,7 @@ members = [
     "languages/bevy_mod_scripting_lua_derive",
     "languages/bevy_mod_scripting_rhai",
     "languages/bevy_mod_scripting_rhai_derive",
+    "languages/bevy_mod_scripting_rune",
     "bevy_mod_scripting_common",
 ]
 

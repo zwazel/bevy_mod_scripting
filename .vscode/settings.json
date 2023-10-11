@@ -12,5 +12,8 @@
     ],
     "rust-analyzer.server.extraEnv": {
         "RUSTUP_TOOLCHAIN": "stable"
-    }
+    },
+    "rust-analyzer.linkedProjects": [
+        ".\\languages\\bevy_mod_scripting_rune_derive\\Cargo.toml"
+    ]
 }
