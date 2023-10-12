@@ -1,3 +1,3 @@
-# bevy_mod_scripting_rune_derive
+# bevy_mod_scripting_rune
 
-This crate is a part of the ["bevy_mod_scripting" workspace](https://github.com/makspll/bevy_mod_scripting).
+This crate is a part of the ["bevy_mod_scripting" workspace](https://github.com/zwazel/bevy_mod_scripting).

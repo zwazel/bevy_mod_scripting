@@ -167,6 +167,11 @@ path = "examples/rhai/multiple_events_rhai.rs"
 required-features = ["rhai", "rhai_script_api"]
 
 [[example]]
+name = "multiple_events_rune"
+path = "examples/rune/multiple_events_rune.rs"
+required-features = ["rune", "rune_script_api"]
+
+[[example]]
 name = "wrappers"
 path = "examples/wrappers.rs"
 required-features = ["lua54", "lua_script_api"]
