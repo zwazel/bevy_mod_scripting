@@ -100,6 +100,7 @@ members = [
     "languages/bevy_mod_scripting_rhai",
     "languages/bevy_mod_scripting_rhai_derive",
     "languages/bevy_mod_scripting_rune",
+    "languages/bevy_mod_scripting_rune_derive",
     "bevy_mod_scripting_common",
 ]
 

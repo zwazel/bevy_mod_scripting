@@ -7,7 +7,7 @@ license = "MIT"
 description = "Bevy API for multiple script languages, part of bevy_mod_scripting."
 repository = "https://github.com/makspll/bevy_mod_scripting"
 homepage = "https://github.com/makspll/bevy_mod_scripting"
-keywords = ["bevy", "gamedev", "scripting", "lua", "rhai"]
+keywords = ["bevy", "gamedev", "scripting", "lua", "rhai", "rune"]
 categories = ["game-development"]
 readme = "readme.md"
 
