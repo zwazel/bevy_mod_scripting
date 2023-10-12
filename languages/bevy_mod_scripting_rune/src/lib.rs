@@ -1,35 +1,36 @@
 use crate::{
-    assets::{RhaiFile, RhaiLoader},
-    docs::RhaiDocFragment,
+    assets::{RuneFile, RuneLoader},
+    docs::RuneDocFragment,
 };
 use bevy::{ecs::schedule::ScheduleLabel, prelude::*};
 use bevy_mod_scripting_core::{prelude::*, systems::*, world::WorldPointer};
-use rhai::*;
+use rune::{Context, Vm, Module};
 use std::marker::PhantomData;
 
 pub mod assets;
 pub mod docs;
-pub use rhai;
+pub use rune;
 pub mod prelude {
     pub use crate::{
-        assets::{RhaiFile, RhaiLoader},
-        docs::RhaiDocFragment,
-        RhaiContext, RhaiEvent, RhaiScriptHost,
+        assets::{RuneFile, RuneLoader},
+        docs::RuneDocFragment,
+        RuneContext, RuneEvent, RuneScriptHost,
     };
-    pub use rhai;
-    pub use rhai::{Engine, FuncArgs};
+    pub use rune;
 }
 
 #[derive(Resource)]
-pub struct RhaiScriptHost<A: FuncArgs + Send> {
-    pub engine: Engine,
+pub struct RuneScriptHost<A: Send> {
+    pub engine: Vm,
     _ph: PhantomData<A>,
 }
 
 #[allow(deprecated)]
-impl<A: FuncArgs + Send> Default for RhaiScriptHost<A> {
+impl<A: Send> Default for RuneScriptHost<A> {
     fn default() -> Self {
-        let mut e = Engine::new();
+        let context = Context::default();
+
+        let mut e = Vm::new();
         // prevent shadowing of `state`,`world` and `entity` in variable in scripts
         e.on_def_var(|_, info, _| {
             Ok(info.name() != "state" && info.name() != "world" && info.name() != "entity")
@@ -42,32 +43,29 @@ impl<A: FuncArgs + Send> Default for RhaiScriptHost<A> {
     }
 }
 
-pub struct RhaiContext {
-    pub ast: AST,
-    pub scope: Scope<'static>,
-}
+pub struct RuneContext;
 
 #[derive(Clone, Event)]
-/// A Rhai Hook. The result of creating this event will be
-/// a call to the lua script with the hook_name and the given arguments
-pub struct RhaiEvent<A: FuncArgs + Clone + 'static> {
+/// A Rune Hook. The result of creating this event will be
+/// a call to the rune script with the hook_name and the given arguments
+pub struct RuneEvent<A: Clone + 'static> {
     pub hook_name: String,
     pub args: A,
     pub recipients: Recipients,
 }
 
-impl<A: FuncArgs + Clone + Send + Sync + 'static> ScriptEvent for RhaiEvent<A> {
+impl<A: Clone + Send + Sync + 'static> ScriptEvent for RuneEvent<A> {
     fn recipients(&self) -> &crate::Recipients {
         &self.recipients
     }
 }
 
-impl<A: FuncArgs + Send + Clone + Sync + 'static> ScriptHost for RhaiScriptHost<A> {
-    type ScriptContext = RhaiContext;
-    type ScriptEvent = RhaiEvent<A>;
-    type ScriptAsset = RhaiFile;
-    type APITarget = Engine;
-    type DocTarget = RhaiDocFragment;
+impl<A: Send + Clone + Sync + 'static> ScriptHost for RuneScriptHost<A> {
+    type ScriptContext = RuneContext;
+    type ScriptEvent = RuneEvent<A>;
+    type ScriptAsset = RuneFile;
+    type APITarget = Vm;
+    type DocTarget = RuneDocFragment;
 
     fn register_with_app_in_set(
         app: &mut bevy::prelude::App,
@@ -75,14 +73,14 @@ impl<A: FuncArgs + Send + Clone + Sync + 'static> ScriptHost for RhaiScriptHost<
         set: impl SystemSet,
     ) {
         app.add_priority_event::<Self::ScriptEvent>()
-            .add_asset::<RhaiFile>()
-            .init_asset_loader::<RhaiLoader>()
+            .add_asset::<RuneFile>()
+            .init_asset_loader::<RuneLoader>()
             .init_resource::<CachedScriptState<Self>>()
             .init_resource::<ScriptContexts<Self::ScriptContext>>()
             .init_resource::<APIProviders<Self>>()
             .register_type::<ScriptCollection<Self::ScriptAsset>>()
             .register_type::<Script<Self::ScriptAsset>>()
-            .register_type::<Handle<RhaiFile>>()
+            .register_type::<Handle<RuneFile>>()
             .add_systems(
                 schedule,
                 (
@@ -99,7 +97,7 @@ impl<A: FuncArgs + Send + Clone + Sync + 'static> ScriptHost for RhaiScriptHost<
                 |mut providers: ResMut<APIProviders<Self>>, mut host: ResMut<Self>| {
                     providers
                         .attach_all(&mut host.engine)
-                        .expect("Error in adding api's for rhai");
+                        .expect("Error in adding api's for rune");
                 },
             );
     }
@@ -138,7 +136,7 @@ impl<A: FuncArgs + Send + Clone + Sync + 'static> ScriptHost for RhaiScriptHost<
         // persistent state for scripts
         scope.push("state", Map::new());
 
-        Ok(RhaiContext { ast, scope })
+        Ok(RuneContext { ast, scope })
     }
 
     fn handle_events<'a>(

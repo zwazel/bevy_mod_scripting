@@ -1,8 +1,8 @@
 use bevy_mod_scripting_core::prelude::*;
 
-pub struct RhaiDocFragment;
+pub struct RuneDocFragment;
 
-impl DocFragment for RhaiDocFragment {
+impl DocFragment for RuneDocFragment {
     fn merge(self, _o: Self) -> Self {
         todo!()
     }
