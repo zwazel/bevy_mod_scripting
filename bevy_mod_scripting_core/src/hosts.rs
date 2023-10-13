@@ -380,7 +380,7 @@ impl<T: Asset> Script<T> {
         let entity = contexts.script_owner(script.id()).unwrap();
 
         // remove old context
-        contexts.remove_context_entity(entity);
+        contexts.remove_single_context_script(script.id);
 
         // insert new re-loaded context
         Self::insert_new_script_context::<H>(
