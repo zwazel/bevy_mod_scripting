@@ -54,13 +54,14 @@ pub fn script_add_synchronizer<H: ScriptHost + 'static>(
             // find out what's changed
             // we only care about added or removed scripts here
             // if the script asset gets changed we deal with that elsewhere
-
             let context_ids = contexts
                 .context_entities
+                .get(&entity)
+                .unwrap()
                 .iter()
-                .filter_map(|(sid, (e, _, _))| if *e == entity { Some(sid) } else { None })
-                .cloned()
+                .map(|(sid, _, _)| *sid)
                 .collect::<HashSet<u32>>();
+
             let script_ids = new_scripts
                 .scripts
                 .iter()
@@ -71,7 +72,7 @@ pub fn script_add_synchronizer<H: ScriptHost + 'static>(
             let added_scripts = script_ids.difference(&context_ids);
 
             for r in removed_scripts {
-                contexts.remove_context(*r);
+                contexts.remove_single_context_script(*r);
             }
 
             for a in added_scripts {
@@ -96,18 +97,7 @@ pub fn script_remove_synchronizer<H: ScriptHost>(
     mut contexts: ResMut<ScriptContexts<H::ScriptContext>>,
 ) {
     for v in query.iter() {
-        // we know that this entity used to have a script component
-        // ergo a script context must exist in ctxts, remove all scripts on the entity
-        let mut script_ids = Vec::new();
-        for (script_id, (entity, ..)) in contexts.context_entities.iter() {
-            if entity.index() == v.index() {
-                script_ids.push(*script_id);
-            }
-        }
-
-        for script_id in script_ids {
-            contexts.remove_context(script_id);
-        }
+        contexts.remove_context_entity(v);
     }
 }
 
@@ -182,21 +172,27 @@ pub fn script_event_handler<H: ScriptHost, const MAX: u32, const MIN: u32>(world
     let ctx_iter = ctxts
         .context_entities
         .iter_mut()
-        .filter_map(|(sid, (entity, o, name))| {
-            let ctx = match o {
-                Some(v) => v,
-                None => return None,
-            };
+        .filter_map(|(entity, vec)| {
+            vec.sort_by(|a, b| a.0.cmp(&b.0));
+            let vec = vec.into_iter();
+            let vec = vec.filter_map(|(sid, o, name)| {
+                let ctx = match o {
+                    Some(v) => v,
+                    None => return None,
+                };
 
-            Some((
-                ScriptData {
-                    sid: *sid,
-                    entity: *entity,
-                    name,
-                },
-                ctx,
-            ))
-        });
+                Some((
+                    ScriptData {
+                        sid: *sid,
+                        entity: *entity,
+                        name,
+                    },
+                    ctx,
+                ))
+            });
+            Some(vec)
+        })
+        .flatten();
 
     // safety: we have unique access to world, future accesses are protected
     // by the lock in the pointer
