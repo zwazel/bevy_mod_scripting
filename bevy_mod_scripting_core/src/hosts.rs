@@ -267,7 +267,7 @@ impl<T: ScriptHost> APIProviders<T> {
 pub struct ScriptContexts<C> {
     /// holds script contexts for all scripts given their instance ids.
     /// This also stores contexts which are not fully loaded hence the Option
-    pub context_entities: HashMap<u32, (Entity, Option<C>, String)>,
+    pub context_entities: HashMap<Entity, Vec<(u32, Option<C>, String)>>,
 }
 
 impl<C> Default for ScriptContexts<C> {
@@ -280,22 +280,38 @@ impl<C> Default for ScriptContexts<C> {
 
 impl<C> ScriptContexts<C> {
     pub fn script_owner(&self, script_id: u32) -> Option<Entity> {
-        self.context_entities.get(&script_id).map(|(e, _c, _n)| *e)
+        self.context_entities
+            .iter()
+            .find(|(_, v)| v.iter().any(|(id, _, _)| *id == script_id))
+            .map(|(e, _)| *e)
     }
 
     pub fn insert_context(&mut self, fd: ScriptData, ctx: Option<C>) {
-        self.context_entities
-            .insert(fd.sid, (fd.entity, ctx, fd.name.to_owned()));
+        if let Some(v) = self.context_entities.get_mut(&fd.entity) {
+            v.push((fd.sid, ctx, fd.name.to_owned()));
+        } else {
+            self.context_entities
+                .insert(fd.entity, vec![(fd.sid, ctx, fd.name.to_owned())]);
+        }
     }
 
-    pub fn remove_context(&mut self, script_id: u32) {
-        self.context_entities.remove(&script_id);
+    /// Removes all contexts for the given entity
+    pub fn remove_context_entity(&mut self, entity: Entity) {
+        self.context_entities.remove(&entity);
+    }
+
+    /// Removes the context for the given script id
+    pub fn remove_single_context_script(&mut self, script_id: u32) {
+        self.context_entities
+            .iter_mut()
+            .for_each(|(_, v)| v.retain(|(id, _, _)| *id != script_id));
     }
 
     pub fn has_context(&self, script_id: u32) -> bool {
-        self.context_entities
-            .get(&script_id)
-            .map_or(false, |(_, c, _)| c.is_some())
+        self.context_entities.iter().any(|(_, v)| {
+            v.iter()
+                .any(|(id, ctx, _)| *id == script_id && ctx.is_some())
+        })
     }
 
     pub fn is_empty(&self) -> bool {
@@ -364,7 +380,7 @@ impl<T: Asset> Script<T> {
         let entity = contexts.script_owner(script.id()).unwrap();
 
         // remove old context
-        contexts.remove_context(script.id());
+        contexts.remove_context_entity(entity);
 
         // insert new re-loaded context
         Self::insert_new_script_context::<H>(
