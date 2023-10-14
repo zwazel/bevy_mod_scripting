@@ -1,0 +1,9 @@
+(
+    name: "EventEntityPrototype",
+    schematics: {
+        "multiple_events_rhai_proto::NewlyAddedEntityCallInit": (),
+        "bevy_mod_scripting_core::hosts::ScriptCollection<bevy_mod_scripting_rhai::assets::RhaiFile>": (
+            []
+        )
+    }
+)
