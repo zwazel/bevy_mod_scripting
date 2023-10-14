@@ -1,4 +1,5 @@
 use bevy::{prelude::*, reflect::Reflect};
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_scripting_core::{
     event::ScriptLoaded,
     prelude::{APIProvider, PriorityEventWriter, Recipients, Script, ScriptCollection},
@@ -9,18 +10,39 @@ use bevy_mod_scripting_rhai::{
     rhai::{Engine, FuncArgs},
     RhaiContext, RhaiEvent, RhaiScriptHost,
 };
+use bevy_proto::{
+    backend::schematics::{ReflectSchematic, Schematic},
+    prelude::{prototype_ready, ProtoCommands, ProtoPlugin, PrototypesMut},
+};
 use bevy_script_api::prelude::RhaiBevyAPIProvider;
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, ScriptingPlugin))
-        .add_systems(Startup, setup_entities)
-        .add_systems(Update, (call_init, call_update))
+        .add_plugins((
+            DefaultPlugins,
+            ScriptingPlugin,
+            ProtoPlugin::new(),
+            WorldInspectorPlugin::new(),
+        ))
+        .add_systems(Startup, (setup_entities, setup_prototypes))
+        .add_systems(
+            Update,
+            (
+                call_init,
+                call_update,
+                spawn_prototypes
+                    .run_if(prototype_ready("EventEntityPrototype").and_then(run_once())),
+            ),
+        )
         .add_script_host::<RhaiScriptHost<ScriptArgs>>(PostUpdate)
         .add_api_provider::<RhaiScriptHost<ScriptArgs>>(Box::new(RhaiBevyAPIProvider))
         .add_script_handler::<RhaiScriptHost<ScriptArgs>, 0, 2>(PostUpdate)
+        .register_type::<NewlyAddedEntityCallInit>()
         .run();
 }
+
+#[derive(Reflect, Component, Schematic)]
+struct TestProto;
 
 #[derive(Default)]
 pub struct MyCustomAPI;
@@ -57,6 +79,17 @@ impl FuncArgs for ScriptArgs {
     }
 }
 
+fn setup_prototypes(mut prototypes: PrototypesMut) {
+    let test = ScriptCollection::<RhaiFile> { scripts: vec![] };
+    println!("TYPE NAME: {}", test.type_name());
+
+    prototypes.load("prototypes/multiple_events.prototype.ron");
+}
+
+fn spawn_prototypes(mut commands: ProtoCommands) {
+    commands.spawn("EventEntityPrototype");
+}
+
 fn setup_entities(mut commands: Commands, asset_server: Res<AssetServer>) {
     let script_path = "scripts/multiple_events_rhai.rhai";
 
@@ -75,8 +108,8 @@ fn setup_entities(mut commands: Commands, asset_server: Res<AssetServer>) {
     }
 }
 
-#[derive(Debug, Clone, Copy, Reflect, Default, Component)]
-#[reflect(Component)]
+#[derive(Debug, Clone, Copy, Reflect, Default, Component, Schematic)]
+#[reflect(Component, Schematic)]
 pub struct NewlyAddedEntityCallInit;
 
 fn call_update(

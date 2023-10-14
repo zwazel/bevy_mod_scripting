@@ -427,7 +427,9 @@ impl<T: Asset> Script<T> {
 }
 
 #[derive(Component, Debug, Reflect)]
+#[cfg_attr(feature = "bevy_proto", derive(Schematic))]
 #[reflect(Component, Default)]
+#[cfg_attr(feature = "bevy_proto", reflect(Schematic))]
 /// The component storing many scripts.
 /// Scripts receive information about the entity they are attached to
 /// Scripts have unique identifiers and hence multiple copies of the same script
