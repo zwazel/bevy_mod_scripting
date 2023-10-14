@@ -174,7 +174,6 @@ pub fn script_event_handler<H: ScriptHost, const MAX: u32, const MIN: u32>(world
         .context_entities
         .iter_mut()
         .filter_map(|(entity, vec)| {
-            vec.sort_by(|a, b| a.0.cmp(&b.0));
             let vec = vec.iter_mut().filter_map(|(sid, o, name)| {
                 let ctx = match o {
                     Some(v) => v,
