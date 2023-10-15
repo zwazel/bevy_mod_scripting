@@ -4,6 +4,8 @@ use crate::{
 };
 use bevy::{ecs::schedule::ScheduleLabel, prelude::*};
 use bevy_mod_scripting_core::{prelude::*, systems::*, world::WorldPointer};
+#[cfg(feature = "bevy_proto")]
+use bevy_proto::prelude::*;
 use rhai::*;
 use std::marker::PhantomData;
 
@@ -76,6 +78,7 @@ impl<A: FuncArgs + Send + Clone + Sync + 'static> ScriptHost for RhaiScriptHost<
     ) {
         app.add_priority_event::<Self::ScriptEvent>()
             .add_asset::<RhaiFile>()
+            .register_type::<ScriptCollection<RhaiFile>>()
             .init_asset_loader::<RhaiLoader>()
             .init_resource::<CachedScriptState<Self>>()
             .init_resource::<ScriptContexts<Self::ScriptContext>>()
@@ -102,6 +105,11 @@ impl<A: FuncArgs + Send + Clone + Sync + 'static> ScriptHost for RhaiScriptHost<
                         .expect("Error in adding api's for rhai");
                 },
             );
+
+        #[cfg(feature = "bevy_proto")]
+        app.register_type_data::<ScriptCollection<RhaiFile>, ReflectSchematic>();
+        #[cfg(feature = "bevy_proto")]
+        println!("Registered RhaiFile with bevy_proto");
     }
 
     fn setup_script(

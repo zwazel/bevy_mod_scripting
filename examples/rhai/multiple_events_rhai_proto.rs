@@ -83,7 +83,7 @@ fn setup_prototypes(mut prototypes: PrototypesMut) {
     let test = ScriptCollection::<RhaiFile> { scripts: vec![] };
     println!("TYPE NAME: {}", test.type_name());
 
-    prototypes.load("prototypes/multiple_events.prototype.ron");
+    prototypes.load("proto_assets/multiple_events.prototype.ron");
 }
 
 fn spawn_prototypes(mut commands: ProtoCommands) {
